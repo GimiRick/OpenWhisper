@@ -1,0 +1,47 @@
+{
+  "name": "openwhisper",
+  "version": "0.0.1",
+  "description": "A local-first AI speech transcription and AI assistant CLI inspired by Claude Code",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "openwhisper": "./bin/openwhisper.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "cli": "node bin/openwhisper.js",
+    "build": "node --check index.js bin/openwhisper.js src/cli/app.js",
+    "lint": "node --check index.js bin/openwhisper.js test/*.test.js",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "whisper",
+    "stt",
+    "speech-to-text",
+    "ai",
+    "llm",
+    "claude-code",
+    "cli",
+    "terminal",
+    "ollama",
+    "lmstudio",
+    "openai"
+  ],
+  "author": "OpenWhisper Team",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "clipboardy": "^4.0.0",
+    "commander": "^12.1.0",
+    "figlet": "^1.7.0",
+    "gradient-string": "^3.0.0",
+    "inquirer": "^9.3.2",
+    "ora": "^8.0.1",
+    "pino": "^9.3.2",
+    "pino-pretty": "^11.2.2"
+  },
+  "devDependencies": {}
+}
