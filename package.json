@@ -15,7 +15,7 @@
     "cli": "node bin/openwhisper.js",
     "build": "node --check index.js bin/openwhisper.js src/cli/app.js",
     "lint": "node --check index.js bin/openwhisper.js test/*.test.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test"
   },
   "keywords": [
     "whisper",
