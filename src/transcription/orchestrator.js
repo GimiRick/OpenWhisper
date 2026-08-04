@@ -17,12 +17,18 @@ export class TranscriptionOrchestrator {
 
   async toggleSpeechToText(onStatusChange = null) {
     if (!this.isSTTRecording) {
-      // Start recording STT
-      this.isSTTRecording = true;
-      this.soundPlayer.playStart();
-      if (onStatusChange) onStatusChange('Listening for Speech-to-Text...');
-      this.currentWavPath = await this.audioRecorder.startRecording();
-      logger.info('Started STT audio recording session');
+      try {
+        // Start recording STT
+        this.isSTTRecording = true;
+        this.soundPlayer.playStart();
+        if (onStatusChange) onStatusChange('Listening for Speech-to-Text...');
+        this.currentWavPath = await this.audioRecorder.startRecording();
+        logger.info('Started STT audio recording session');
+      } catch (err) {
+        this.isSTTRecording = false;
+        this.soundPlayer.playError();
+        if (onStatusChange) onStatusChange(`STT Error: ${err.message}`);
+      }
     } else {
       // Stop recording STT & process
       this.isSTTRecording = false;
@@ -51,12 +57,18 @@ export class TranscriptionOrchestrator {
 
   async toggleAIAssistant(onStatusChange = null, onStreamToken = null) {
     if (!this.isAssistantRecording) {
-      // Start recording AI Assistant prompt
-      this.isAssistantRecording = true;
-      this.soundPlayer.playStart();
-      if (onStatusChange) onStatusChange('Listening for AI Assistant prompt...');
-      this.currentWavPath = await this.audioRecorder.startRecording();
-      logger.info('Started AI Assistant audio recording session');
+      try {
+        // Start recording AI Assistant prompt
+        this.isAssistantRecording = true;
+        this.soundPlayer.playStart();
+        if (onStatusChange) onStatusChange('Listening for AI Assistant prompt...');
+        this.currentWavPath = await this.audioRecorder.startRecording();
+        logger.info('Started AI Assistant audio recording session');
+      } catch (err) {
+        this.isAssistantRecording = false;
+        this.soundPlayer.playError();
+        if (onStatusChange) onStatusChange(`AI Assistant Error: ${err.message}`);
+      }
     } else {
       // Stop recording & process through Whisper + LLM
       this.isAssistantRecording = false;

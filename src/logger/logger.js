@@ -8,8 +8,24 @@ ensureDirectoriesExist();
 
 const logFilePath = path.join(DEFAULT_PATHS.logsDir, 'openwhisper.log');
 
-// Create stream to write log file
-const fileStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+function createLogStream() {
+  const stream = fs.createWriteStream(logFilePath, { flags: 'a' });
+  stream.on('error', () => {
+    stream.destroy();
+  });
+  return stream;
+}
+
+let fileStream = createLogStream();
+
+const logSink = {
+  write(chunk) {
+    if (fileStream.destroyed || !fs.existsSync(logFilePath)) {
+      fileStream = createLogStream();
+    }
+    fileStream.write(chunk);
+  }
+};
 
 export const logger = pino(
   {
@@ -21,7 +37,7 @@ export const logger = pino(
     base: { pid: false },
     timestamp: pino.stdTimeFunctions.isoTime
   },
-  fileStream
+  logSink
 );
 
 export function getLogFilePath() {

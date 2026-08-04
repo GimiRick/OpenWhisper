@@ -40,8 +40,6 @@
     "gradient-string": "^3.0.0",
     "inquirer": "^9.3.2",
     "ora": "^8.0.1",
-    "pino": "^9.3.2",
-    "pino-pretty": "^11.2.2"
-  },
-  "devDependencies": {}
+    "pino": "^9.3.2"
+  }
 }

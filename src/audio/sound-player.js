@@ -45,7 +45,6 @@ export class SoundPlayer {
   playStop() { this.playSound('stop'); }
   playSuccess() { this.playSound('success'); }
   playError() { this.playSound('error'); }
-  playConfigSaved() { this.playSound('configSaved'); }
 }
 
 export const soundPlayer = new SoundPlayer();

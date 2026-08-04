@@ -38,7 +38,7 @@ export async function executeSetupWhisper() {
   if (installedFilenames.has(selectedModel.filename)) {
     console.log(theme.success(`Model ${selectedModel.filename} is already downloaded!`));
     configManager.setCurrentWhisperModel(selectedModel.filename);
-    console.log(theme.info ? theme.info(`Updated active Whisper model to ${selectedModel.filename}`) : theme.primary(`Updated active Whisper model to ${selectedModel.filename}`));
+    console.log(theme.primary(`Updated active Whisper model to ${selectedModel.filename}`));
     return;
   }
 

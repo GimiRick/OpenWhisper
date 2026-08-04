@@ -37,7 +37,7 @@ export class DependencyChecker {
     if (isAvail) {
       return { ok: true, message: `whisper.cpp binary ready at ${binPath}` };
     } else {
-      return { ok: true, message: `Using OpenWhisper builtin JS/Native whisper runner (${binPath})` };
+      return { ok: false, message: `whisper.cpp binary not found (${binPath}). Transcription is unavailable until it is installed.` };
     }
   }
 

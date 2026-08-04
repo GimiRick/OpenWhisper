@@ -27,6 +27,13 @@ export class ConfigManager {
       }
     } catch (error) {
       logger.error({ error, configFile: this.configFilePath }, 'Failed to load configuration, backing up and resetting to default');
+      try {
+        if (fs.existsSync(this.configFilePath)) {
+          fs.copyFileSync(this.configFilePath, `${this.configFilePath}.bak`);
+        }
+      } catch (backupError) {
+        logger.error({ error: backupError, configFile: this.configFilePath }, 'Failed to back up corrupt configuration');
+      }
       this.config = structuredClone(DEFAULT_CONFIG);
       this.save();
     }

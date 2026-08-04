@@ -101,10 +101,8 @@ export class WhisperRunner {
   }
 
   async fallbackTranscribe(audioWavPath) {
-    // Intelligent fallback transcription when binary is installing/unavailable
-    logger.info({ audioWavPath }, 'Simulating transcription fallback');
-    await new Promise(r => setTimeout(r, 600));
-    return "[OpenWhisper Transcription] Hello! This is transcribed speech ready to auto-type.";
+    logger.warn({ audioWavPath }, 'Whisper binary or model unavailable; returning empty transcription');
+    return '';
   }
 }
 
