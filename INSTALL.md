@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Node.js**: v18.0.0 LTS or higher (v24 LTS recommended)
+- **Node.js**: v20.0.0 or higher (v22/v24 LTS recommended)
 - **Package Manager**: `npm` v9+ or `yarn` / `pnpm`
 - **Operating System**: Windows 10/11, macOS 12+, or Linux (Ubuntu/Debian/Arch)
 
