@@ -8,7 +8,7 @@ import { maskSecret } from '../helpers/formatting.js';
 export class ConfigManager {
   constructor(configFilePath = DEFAULT_PATHS.configFile) {
     this.configFilePath = configFilePath;
-    this.config = { ...DEFAULT_CONFIG };
+    this.config = structuredClone(DEFAULT_CONFIG);
     this.load();
   }
 
@@ -18,15 +18,16 @@ export class ConfigManager {
       if (fs.existsSync(this.configFilePath)) {
         const rawData = fs.readFileSync(this.configFilePath, 'utf-8');
         const parsed = JSON.parse(rawData);
-        this.config = this.mergeDeep({ ...DEFAULT_CONFIG }, parsed);
+        this.config = this.mergeDeep(structuredClone(DEFAULT_CONFIG), parsed);
         logger.info({ configFile: this.configFilePath }, 'Configuration loaded successfully');
       } else {
+        this.config = structuredClone(DEFAULT_CONFIG);
         this.save();
         logger.info({ configFile: this.configFilePath }, 'Default configuration initialized and saved');
       }
     } catch (error) {
       logger.error({ error, configFile: this.configFilePath }, 'Failed to load configuration, backing up and resetting to default');
-      this.config = { ...DEFAULT_CONFIG };
+      this.config = structuredClone(DEFAULT_CONFIG);
       this.save();
     }
   }
@@ -126,18 +127,22 @@ export class ConfigManager {
   }
 
   resetToDefaults() {
-    this.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    this.config = structuredClone(DEFAULT_CONFIG);
     this.save();
   }
 
   mergeDeep(target, source) {
+    const output = { ...target };
     for (const key of Object.keys(source)) {
-      if (source[key] instanceof Object && key in target && target[key] instanceof Object) {
-        Object.assign(source[key], this.mergeDeep(target[key], source[key]));
+      const srcValue = source[key];
+      const dstValue = output[key];
+      if (srcValue instanceof Object && !Array.isArray(srcValue) && dstValue instanceof Object && !Array.isArray(dstValue)) {
+        output[key] = this.mergeDeep(dstValue, srcValue);
+      } else {
+        output[key] = srcValue;
       }
     }
-    Object.assign(target || {}, source);
-    return target;
+    return output;
   }
 }
 

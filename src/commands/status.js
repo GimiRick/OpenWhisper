@@ -1,6 +1,7 @@
 import { configManager } from '../config/config-manager.js';
 import { getInstalledWhisperModels } from '../models/whisper-models.js';
-import { getDirectorySize, DEFAULT_PATHS } from '../helpers/paths.js';
+import { getDirectorySize } from '../helpers/paths.js';
+import { DEFAULT_PATHS } from '../constants/defaults.js';
 import { formatBytes } from '../helpers/formatting.js';
 import { renderBox } from '../ui/components.js';
 import { theme } from '../ui/theme.js';
