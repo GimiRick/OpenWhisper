@@ -29,7 +29,7 @@ All configuration is stored locally in JSON format at:
     }
   },
   "hotkeys": {
-    "speechToText": "CTRL+ALT",
+    "speechToText": "CTRL+T",
     "aiAssistant": "CTRL+SHIFT+K"
   },
   "audio": {
@@ -50,3 +50,10 @@ All configuration is stored locally in JSON format at:
 ## Secret Redaction & Safety
 
 OpenWhisper automatically redacts and masks API keys (`sk-...`) when printing configurations (`/config`) and when writing activity logs to disk.
+
+## Hotkey Notes
+
+Hotkeys are captured only while the OpenWhisper terminal window is focused, and
+only `CTRL + <letter>` combinations can be captured (`CTRL+T` for dictation,
+`CTRL+K` / `CTRL+SHIFT+K` for the AI Assistant). Unsupported combinations in
+`config.json` fall back to the default key with a warning.

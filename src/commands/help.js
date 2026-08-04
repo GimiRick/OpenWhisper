@@ -1,5 +1,6 @@
 import { theme } from '../ui/theme.js';
 import { renderTable } from '../ui/components.js';
+import { hotkeyManager } from '../hotkeys/hotkey-manager.js';
 
 export async function executeHelp() {
   console.log();
@@ -14,7 +15,7 @@ export async function executeHelp() {
     ['/remove whisper', 'Delete an installed Whisper model from disk'],
     ['/models', 'List all available and downloaded Whisper models'],
     ['/status', 'Display system status, paths, active models, and sizes'],
-    ['/doctor', 'Run diagnostic self-tests on microphone, hotkeys, and LLM'],
+    ['/doctor', 'Run diagnostic health checks (whisper binary, models, LLM, hotkeys, clipboard)'],
     ['/config', 'Display full active configuration in JSON'],
     ['/logs', 'View recent system activity and error logs'],
     ['/version', 'Display OpenWhisper CLI version'],
@@ -26,8 +27,10 @@ export async function executeHelp() {
   renderTable(['Command', 'Description'], commands);
 
   console.log();
-  console.log(theme.accent('Keyboard Shortcuts:'));
-  console.log(`  ${theme.key('CTRL + ALT')}      Hold/Toggle dictation. Whisper transcribes and auto-types into current app.`);
-  console.log(`  ${theme.key('CTRL + SHIFT + K')} Hold/Toggle AI prompt. Whisper transcribes prompt, sends to LLM, and auto-types answer.`);
+  const keys = hotkeyManager.getEffectiveHotkeys();
+  console.log(theme.accent('Terminal Hotkeys (work while this terminal window is focused):'));
+  console.log(`  ${theme.key(keys.speechToText.padEnd(12))} Toggle dictation. Whisper transcribes and auto-types into the focused app.`);
+  console.log(`  ${theme.key(keys.aiAssistant.padEnd(12))} Toggle AI prompt. Whisper transcribes the prompt, sends it to the LLM, and auto-types the answer.`);
+  console.log(`  ${' '.repeat(13)}(Ctrl+${keys.aiAssistant.replace('CTRL+SHIFT+', '')} triggers the same action)`);
   console.log();
 }

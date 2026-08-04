@@ -37,7 +37,8 @@ npm run cli
 
 ### Windows
 
-- No additional tools required. Built-in PowerShell MCI audio recording driver and WScript synthetic input drivers are included out of the box.
+- No additional tools required. Audio recording uses the built-in PowerShell MCI driver, and auto-typing uses PowerShell `SendKeys`.
+- Hotkeys are captured only while the OpenWhisper terminal window is focused; there is no separate system-wide hotkey driver to install.
 
 ### macOS
 

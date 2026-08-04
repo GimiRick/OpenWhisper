@@ -17,9 +17,9 @@ export async function executeDoctor() {
     { label: 'Whisper.cpp Binary', key: 'whisperBinary' },
     { label: 'Installed Whisper Models', key: 'installedModels' },
     { label: 'LLM Endpoint Connectivity', key: 'llmConnectivity' },
-    { label: 'Global Keyboard Hotkeys', key: 'hotkeys' },
+    { label: 'Terminal Hotkeys', key: 'hotkeys' },
     { label: 'Clipboard System Integration', key: 'clipboard' },
-    { label: 'Active Window Auto-Typing Driver', key: 'typingPermissions' }
+    { label: 'Auto-Type (Clipboard + Paste)', key: 'typingPermissions' }
   ];
 
   for (const item of items) {

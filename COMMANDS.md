@@ -10,7 +10,7 @@
 | `/remove whisper` | `/remove whisper` | Delete installed Whisper model binary from disk |
 | `/models` | `/models` | Display tabular view of available and installed models |
 | `/status` | `/status` | Show system overview, directory paths, cache size, & hotkeys |
-| `/doctor` | `/doctor` | Diagnostic health check (mic, whisper, llm, hotkeys, clipboard) |
+| `/doctor` | `/doctor` | Diagnostic health check (whisper binary, models, LLM, hotkeys, clipboard) |
 | `/config` | `/config` | Display active configuration JSON with masked secret keys |
 | `/logs` | `/logs` | Display recent log entries from `.openwhisper/logs/openwhisper.log` |
 | `/version` | `/version` | Output OpenWhisper application version |

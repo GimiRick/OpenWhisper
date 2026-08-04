@@ -1,4 +1,5 @@
 import { configManager } from '../config/config-manager.js';
+import { hotkeyManager } from '../hotkeys/hotkey-manager.js';
 import { getInstalledWhisperModels } from '../models/whisper-models.js';
 import { getDirectorySize } from '../helpers/paths.js';
 import { DEFAULT_PATHS } from '../constants/defaults.js';
@@ -11,7 +12,7 @@ export async function executeStatus() {
   const currentLLM = configManager.getCurrentLLMProfile();
   const llmDisplay = currentLLM ? `${currentLLM.name} [${currentLLM.provider.toUpperCase()}] (${currentLLM.model})` : theme.error('None');
   const streaming = configManager.get('streaming') ? theme.success('Enabled') : theme.muted('Disabled');
-  const hotkeys = configManager.get('hotkeys');
+  const hotkeys = hotkeyManager.getEffectiveHotkeys();
 
   const cacheSize = formatBytes(getDirectorySize(DEFAULT_PATHS.cacheDir));
   const modelsSize = formatBytes(getDirectorySize(DEFAULT_PATHS.modelsDir));

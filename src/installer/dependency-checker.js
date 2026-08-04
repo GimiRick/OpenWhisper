@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import clipboardy from 'clipboardy';
 import { whisperRunner } from '../whisper/whisper-runner.js';
+import { formatEffectiveHotkeys } from '../hotkeys/hotkey-config.js';
 import { getInstalledWhisperModels } from '../models/whisper-models.js';
 import { configManager } from '../config/config-manager.js';
 import { LLMProviderFactory } from '../llm/provider-factory.js';
@@ -23,12 +24,7 @@ export class DependencyChecker {
   }
 
   async checkMicrophone() {
-    // Basic mic check
-    try {
-      return { ok: true, message: 'Microphone system interface operational' };
-    } catch (err) {
-      return { ok: false, message: `Microphone check error: ${err.message}` };
-    }
+    return { ok: false, message: 'Not verified. Recording uses the OS default microphone; start a dictation to confirm it works.' };
   }
 
   async checkWhisperBinary() {
@@ -72,8 +68,8 @@ export class DependencyChecker {
   }
 
   async checkHotkeys() {
-    const hk = configManager.get('hotkeys');
-    return { ok: true, message: `Hotkeys active: STT = ${hk.speechToText}, AI Assistant = ${hk.aiAssistant}` };
+    const keys = formatEffectiveHotkeys(configManager.get('hotkeys'));
+    return { ok: true, message: `Terminal hotkeys active: Dictation ${keys.speechToText}, AI Assistant ${keys.aiAssistant}. Active only while this terminal is focused.` };
   }
 
   async checkClipboard() {
@@ -91,7 +87,7 @@ export class DependencyChecker {
   }
 
   async checkTypingPermissions() {
-    return { ok: true, message: 'OS synthetic keyboard input driver initialized' };
+    return { ok: false, message: 'Not verified. Text is injected via clipboard + simulated paste (SendKeys / osascript / xdotool); OS accessibility permission is not pre-checked.' };
   }
 }
 

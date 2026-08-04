@@ -56,7 +56,7 @@ export class WhisperRunner {
     logger.info({ binPath, modelPath, audioWavPath }, 'Executing Whisper transcription');
 
     if (!this.isBinaryAvailable()) {
-      logger.warn('whisper.cpp binary not found in local path. Using intelligent fallback transcription handler.');
+      logger.warn('whisper.cpp binary not found in local path; returning empty transcription');
       return this.fallbackTranscribe(audioWavPath);
     }
 

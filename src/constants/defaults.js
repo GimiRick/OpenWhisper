@@ -37,7 +37,7 @@ export const DEFAULT_CONFIG = {
     }
   },
   hotkeys: {
-    speechToText: 'CTRL+ALT',
+    speechToText: 'CTRL+T',
     aiAssistant: 'CTRL+SHIFT+K'
   },
   audio: {
