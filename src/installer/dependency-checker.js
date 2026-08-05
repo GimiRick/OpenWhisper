@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import clipboardy from 'clipboardy';
 import { whisperRunner } from '../whisper/whisper-runner.js';
 import { formatEffectiveHotkeys } from '../hotkeys/hotkey-config.js';
@@ -24,7 +22,7 @@ export class DependencyChecker {
   }
 
   async checkMicrophone() {
-    return { ok: false, message: 'Not verified. Recording uses the OS default microphone; start a dictation to confirm it works.' };
+    return { ok: false, status: 'unverified', message: 'Not verified. Recording uses the OS default microphone; start a dictation to confirm it works.' };
   }
 
   async checkWhisperBinary() {
@@ -73,7 +71,13 @@ export class DependencyChecker {
   }
 
   async checkClipboard() {
+    let originalClipboard = '';
     try {
+      try {
+        originalClipboard = await clipboardy.read();
+      } catch {
+        // Ignore if clipboard is empty or unreadable
+      }
       const testString = `openwhisper-check-${Date.now()}`;
       await clipboardy.write(testString);
       const readBack = await clipboardy.read();
@@ -83,11 +87,20 @@ export class DependencyChecker {
       return { ok: false, message: 'Clipboard test value mismatch' };
     } catch (err) {
       return { ok: false, message: `Clipboard permission error: ${err.message}` };
+    } finally {
+      // Restore the user's clipboard content that was displaced by the test.
+      if (originalClipboard) {
+        try {
+          await clipboardy.write(originalClipboard);
+        } catch {
+          // ignore restore errors
+        }
+      }
     }
   }
 
   async checkTypingPermissions() {
-    return { ok: false, message: 'Not verified. Text is injected via clipboard + simulated paste (SendKeys / osascript / xdotool); OS accessibility permission is not pre-checked.' };
+    return { ok: false, status: 'unverified', message: 'Not verified. Text is injected via clipboard + simulated paste (SendKeys / osascript / xdotool); OS accessibility permission is not pre-checked.' };
   }
 }
 

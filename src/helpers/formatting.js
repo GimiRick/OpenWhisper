@@ -12,9 +12,3 @@ export function maskSecret(secret) {
   if (secret.length <= 8) return '********';
   return secret.substring(0, 4) + '...' + secret.substring(secret.length - 4);
 }
-
-export function truncateText(text, maxLength = 60) {
-  if (!text) return '';
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength - 3) + '...';
-}

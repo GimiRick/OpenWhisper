@@ -73,21 +73,35 @@ export class TypingEngine {
     const isWin = process.platform === 'win32';
     const isMac = process.platform === 'darwin';
 
+    // Drive the OS helper via spawn so the text never passes through a shell
+    // (shell interpolation with quotes/backslashes in LLM output would corrupt
+    // the command or break quoting).
     return new Promise((resolve) => {
-      if (isWin) {
-        const escaped = text.replace(/'/g, "''").replace(/([+^%~{}()])/g, '{$1}');
-        const psScript = `
-          $wsh = New-Object -ComObject WScript.Shell
-          $wsh.SendKeys('${escaped}')
-        `;
-        exec(`powershell -NoProfile -Command "${psScript}"`, () => resolve());
-      } else if (isMac) {
-        const escaped = text.replace(/"/g, '\\"');
-        const appleScript = `tell application "System Events" to keystroke "${escaped}"`;
-        exec(`osascript -e '${appleScript}'`, () => resolve());
-      } else {
-        const escaped = text.replace(/"/g, '\\"');
-        exec(`xdotool type "${escaped}"`, () => resolve());
+      try {
+        let script;
+        let command;
+        let args;
+        if (isWin) {
+          const escaped = text.replace(/'/g, "''").replace(/([+^%~{}()])/g, '{$1}');
+          script = `$wsh = New-Object -ComObject WScript.Shell\n$wsh.SendKeys('${escaped}')`;
+          command = 'powershell';
+          args = ['-NoProfile', '-Command', script];
+        } else if (isMac) {
+          const escaped = text.replace(/"/g, '\\"');
+          script = `tell application "System Events" to keystroke "${escaped}"`;
+          command = 'osascript';
+          args = ['-e', script];
+        } else {
+          command = 'xdotool';
+          args = ['type', '--', text];
+        }
+
+        const proc = spawn(command, args, { stdio: 'ignore' });
+        proc.on('error', () => resolve());
+        proc.on('close', () => resolve());
+      } catch (err) {
+        logger.error({ err }, 'Failed to type characters');
+        resolve();
       }
     });
   }

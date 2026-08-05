@@ -17,14 +17,14 @@ export class CloudOpenAIProvider {
       if (res.data && Array.isArray(res.data)) {
         return res.data.map(m => m.id);
       }
-      return [this.model];
+      return [];
     } catch (err) {
       logger.warn({ err, baseUrl: this.baseUrl }, 'Failed to fetch Cloud OpenAI models');
-      return [this.model];
+      throw err;
     }
   }
 
-  async streamChat(messages, onToken) {
+  async streamChat(messages, onToken, stream = true) {
     const cleanBase = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
     const endpoint = cleanBase.endsWith('/v1') ? `${cleanBase}/chat/completions` : `${cleanBase}/v1/chat/completions`;
     const url = new URL(endpoint);
@@ -32,7 +32,7 @@ export class CloudOpenAIProvider {
     const payload = JSON.stringify({
       model: this.model,
       messages: messages,
-      stream: true
+      stream
     });
 
     const headers = {
@@ -56,6 +56,23 @@ export class CloudOpenAIProvider {
           res.on('end', () => {
             logger.error({ statusCode: res.statusCode, errBody }, 'Cloud OpenAI request error');
             reject(new Error(`Cloud LLM provider error ${res.statusCode}: ${errBody}`));
+          });
+          return;
+        }
+
+        if (!stream) {
+          // Non-streaming response is a single JSON object.
+          let body = '';
+          res.on('data', (chunk) => { body += chunk.toString(); });
+          res.on('end', () => {
+            try {
+              const data = JSON.parse(body);
+              const token = (data.choices?.[0]?.message?.content) || '';
+              if (onToken) onToken(token);
+              resolve(token);
+            } catch (err) {
+              reject(err);
+            }
           });
           return;
         }
@@ -93,6 +110,8 @@ export class CloudOpenAIProvider {
         res.on('error', reject);
       });
 
+      // Fail instead of hanging indefinitely when the peer stops responding.
+      req.setTimeout(30000, () => req.destroy(new Error('Cloud OpenAI request timed out')));
       req.on('error', reject);
       req.write(payload);
       req.end();
@@ -118,6 +137,7 @@ export class CloudOpenAIProvider {
           }
         });
       });
+      req.setTimeout(15000, () => req.destroy(new Error('Cloud OpenAI request timed out')));
       req.on('error', reject);
     });
   }

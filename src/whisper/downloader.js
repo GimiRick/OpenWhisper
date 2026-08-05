@@ -2,12 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import http from 'http';
-import ora from 'ora';
-import chalk from 'chalk';
 import { DEFAULT_PATHS } from '../constants/defaults.js';
 import { ensureDirectoriesExist } from '../helpers/paths.js';
 import { logger } from '../logger/logger.js';
-import { formatBytes } from '../helpers/formatting.js';
 
 export async function downloadWhisperModel(modelObj, onProgress = null) {
   ensureDirectoriesExist();
@@ -23,7 +20,7 @@ export async function downloadWhisperModel(modelObj, onProgress = null) {
 
     const request = (url) => {
       const client = url.startsWith('https') ? https : http;
-      client.get(url, (response) => {
+      const req = client.get(url, (response) => {
         // Handle redirects (e.g. HuggingFace 302 redirects)
         if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
           logger.info({ redirectUrl: response.headers.location }, 'Following download redirect');
@@ -74,6 +71,9 @@ export async function downloadWhisperModel(modelObj, onProgress = null) {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
         reject(err);
       });
+
+      // Fail instead of hanging indefinitely if the peer stops sending data.
+      req.setTimeout(60000, () => req.destroy(new Error('Download stalled without data for 60s')));
     };
 
     request(modelObj.url);

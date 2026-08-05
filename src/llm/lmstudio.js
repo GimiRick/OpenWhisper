@@ -19,16 +19,18 @@ export class LMStudioProvider {
       return [];
     } catch (err) {
       logger.warn({ err, baseUrl: this.baseUrl }, 'Failed to fetch LM Studio models');
-      return [];
+      // Re-throw so connection failures are not silently reported as success
+      // (e.g. by /doctor connectivity checks).
+      throw err;
     }
   }
 
-  async streamChat(messages, onToken) {
+  async streamChat(messages, onToken, stream = true) {
     const url = new URL(`${this.baseUrl}/chat/completions`);
     const payload = JSON.stringify({
       model: this.model,
       messages: messages,
-      stream: true
+      stream
     });
 
     return new Promise((resolve, reject) => {
@@ -42,6 +44,23 @@ export class LMStudioProvider {
       }, (res) => {
         if (res.statusCode !== 200) {
           return reject(new Error(`LM Studio responded with status code ${res.statusCode}`));
+        }
+
+        if (!stream) {
+          // Non-streaming response is a single JSON object.
+          let body = '';
+          res.on('data', (chunk) => { body += chunk.toString(); });
+          res.on('end', () => {
+            try {
+              const data = JSON.parse(body);
+              const token = (data.choices?.[0]?.message?.content) || '';
+              if (onToken) onToken(token);
+              resolve(token);
+            } catch (err) {
+              reject(err);
+            }
+          });
+          return;
         }
 
         let fullText = '';
@@ -77,6 +96,8 @@ export class LMStudioProvider {
         res.on('error', reject);
       });
 
+      // Fail instead of hanging indefinitely when the peer stops responding.
+      req.setTimeout(30000, () => req.destroy(new Error('LM Studio request timed out')));
       req.on('error', reject);
       req.write(payload);
       req.end();
@@ -98,6 +119,7 @@ export class LMStudioProvider {
           }
         });
       });
+      req.setTimeout(15000, () => req.destroy(new Error('LM Studio request timed out')));
       req.on('error', reject);
     });
   }

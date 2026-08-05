@@ -1,7 +1,7 @@
 import figlet from 'figlet';
 import gradient from 'gradient-string';
 import chalk from 'chalk';
-import { APP_NAME, APP_VERSION } from '../constants/defaults.js';
+import { APP_VERSION } from '../constants/defaults.js';
 import { configManager } from '../config/config-manager.js';
 import { hotkeyManager } from '../hotkeys/hotkey-manager.js';
 import { theme } from '../ui/theme.js';

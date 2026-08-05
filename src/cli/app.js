@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { APP_NAME, APP_VERSION } from '../constants/defaults.js';
+import { APP_VERSION } from '../constants/defaults.js';
 import { runREPL, dispatchCommand } from './repl.js';
 import { executeDoctor } from '../commands/doctor.js';
 import { executeStatus } from '../commands/status.js';

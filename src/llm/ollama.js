@@ -19,16 +19,18 @@ export class OllamaProvider {
       return [];
     } catch (err) {
       logger.warn({ err, baseUrl: this.baseUrl }, 'Failed to fetch Ollama models');
-      return [];
+      // Re-throw so connection failures are not silently reported as success
+      // (e.g. by /doctor connectivity checks).
+      throw err;
     }
   }
 
-  async streamChat(messages, onToken) {
+  async streamChat(messages, onToken, stream = true) {
     const url = new URL(`${this.baseUrl}/api/chat`);
     const payload = JSON.stringify({
       model: this.model,
       messages: messages,
-      stream: true
+      stream
     });
 
     return new Promise((resolve, reject) => {
@@ -42,6 +44,23 @@ export class OllamaProvider {
       }, (res) => {
         if (res.statusCode !== 200) {
           return reject(new Error(`Ollama responded with status code ${res.statusCode}`));
+        }
+
+        if (!stream) {
+          // Non-streaming response is a single JSON object.
+          let body = '';
+          res.on('data', (chunk) => { body += chunk.toString(); });
+          res.on('end', () => {
+            try {
+              const data = JSON.parse(body);
+              const token = (data.message && data.message.content) || '';
+              if (onToken) onToken(token);
+              resolve(token);
+            } catch (err) {
+              reject(err);
+            }
+          });
+          return;
         }
 
         let fullText = '';
@@ -86,6 +105,8 @@ export class OllamaProvider {
         res.on('error', reject);
       });
 
+      // Fail instead of hanging indefinitely when the peer stops responding.
+      req.setTimeout(30000, () => req.destroy(new Error('Ollama request timed out')));
       req.on('error', reject);
       req.write(payload);
       req.end();
@@ -107,6 +128,7 @@ export class OllamaProvider {
           }
         });
       });
+      req.setTimeout(15000, () => req.destroy(new Error('Ollama request timed out')));
       req.on('error', reject);
     });
   }

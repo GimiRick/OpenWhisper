@@ -1,10 +1,19 @@
 import inquirer from 'inquirer';
-import chalk from 'chalk';
 import { configManager } from '../config/config-manager.js';
 import { LLMProviderFactory } from '../llm/provider-factory.js';
 import { OllamaProvider } from '../llm/ollama.js';
 import { LMStudioProvider } from '../llm/lmstudio.js';
 import { theme } from '../ui/theme.js';
+
+// A local server that is not running should not abort model entry: fall back to
+// manual model-name input instead of surfacing the connection error.
+async function listModelsGracefully(listModels) {
+  try {
+    return await listModels();
+  } catch {
+    return [];
+  }
+}
 
 export async function executeSetupLLM() {
   console.log();
@@ -34,7 +43,7 @@ export async function executeSetupLLM() {
     ]);
 
     const tempProvider = new OllamaProvider({ baseUrl });
-    const detectedModels = await tempProvider.listModels();
+    const detectedModels = await listModelsGracefully(() => tempProvider.listModels());
 
     let modelName = '';
     if (detectedModels.length > 0) {
@@ -84,7 +93,7 @@ export async function executeSetupLLM() {
     ]);
 
     const tempProvider = new LMStudioProvider({ baseUrl });
-    const detectedModels = await tempProvider.listModels();
+    const detectedModels = await listModelsGracefully(() => tempProvider.listModels());
 
     let modelName = '';
     if (detectedModels.length > 0) {

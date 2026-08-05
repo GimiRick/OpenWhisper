@@ -13,23 +13,37 @@ export class WhisperRunner {
 
   getBinaryPath() {
     const isWin = process.platform === 'win32';
-    const possibleNames = isWin
+    const localNames = isWin
       ? ['whisper-cli.exe', 'main.exe', 'whisper.exe']
       : ['whisper-cli', 'main', 'whisper'];
+    // Only probe the official whisper.cpp CLI name on the system PATH. Generic
+    // names like 'main' or bare 'whisper' are unsafe there (e.g. the OpenAI
+    // 'whisper' pip CLI / unrelated binaries would be invoked with whisper.cpp
+    // flags and fail confusingly). These names remain valid in local directories.
+    const pathNames = isWin ? ['whisper-cli.exe'] : ['whisper-cli'];
 
     // 1. Check local binDir
-    for (const name of possibleNames) {
+    for (const name of localNames) {
       const p = path.join(this.binDir, name);
       if (fs.existsSync(p)) return p;
     }
 
     // 2. Check current working directory or relative path
-    for (const name of possibleNames) {
+    for (const name of localNames) {
       const p = path.join(process.cwd(), 'whisper.cpp', name);
       if (fs.existsSync(p)) return p;
     }
 
-    // 3. System PATH fallback
+    // 3. System PATH lookup
+    const pathDirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+    for (const dir of pathDirs) {
+      for (const name of pathNames) {
+        const p = path.join(dir, name);
+        if (fs.existsSync(p)) return p;
+      }
+    }
+
+    // 4. Fallback bare name (existence cannot be verified statically)
     return isWin ? 'whisper-cli.exe' : 'whisper-cli';
   }
 
@@ -65,7 +79,11 @@ export class WhisperRunner {
         '-m', modelPath,
         '-f', audioWavPath,
         '--no-timestamps',
-        '-otxt'
+        '-otxt',
+        // Write the transcript deterministically next to the audio file so the
+        // '<audio>.txt' lookup below is not dependent on the process working
+        // directory (whisper.cpp writes to CWD by default).
+        '-of', audioWavPath
       ];
 
       const child = spawn(binPath, args, { stdio: 'pipe' });

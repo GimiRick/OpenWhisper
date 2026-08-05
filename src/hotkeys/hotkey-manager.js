@@ -1,3 +1,4 @@
+import readline from 'readline';
 import { transcriptionOrchestrator } from '../transcription/orchestrator.js';
 import { logger } from '../logger/logger.js';
 import { configManager } from '../config/config-manager.js';
@@ -28,6 +29,10 @@ export class HotkeyManager {
     // readline reports Ctrl+<letter> and Ctrl+Shift+<letter> identically, so the
     // AI Assistant responds to both forms.
     if (process.stdin.isTTY) {
+      // 'keypress' is not emitted by Node streams on its own: it is synthesized
+      // by readline.emitKeypressEvents(), which must be called explicitly.
+      // Without it the listener below never fires. The call is idempotent.
+      readline.emitKeypressEvents(process.stdin);
       process.stdin.on('keypress', (str, key) => {
         if (!this.isActive) return;
         if (!key || !key.ctrl || !key.name) return;
@@ -44,14 +49,6 @@ export class HotkeyManager {
   stopListening() {
     this.isActive = false;
     logger.info('Terminal Hotkey Listener stopped');
-  }
-
-  async triggerSTT(onStatusUpdate = null) {
-    return transcriptionOrchestrator.toggleSpeechToText(onStatusUpdate);
-  }
-
-  async triggerAIAssistant(onStatusUpdate = null, onStreamToken = null) {
-    return transcriptionOrchestrator.toggleAIAssistant(onStatusUpdate, onStreamToken);
   }
 }
 

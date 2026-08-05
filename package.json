@@ -13,8 +13,8 @@
   "scripts": {
     "start": "node index.js",
     "cli": "node bin/openwhisper.js",
-    "build": "node --check index.js bin/openwhisper.js src/cli/app.js",
-    "lint": "node --check index.js bin/openwhisper.js test/*.test.js",
+    "build": "node scripts/syntax-check.js",
+    "lint": "node scripts/syntax-check.js",
     "test": "node --test"
   },
   "keywords": [

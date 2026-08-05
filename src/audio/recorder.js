@@ -30,7 +30,9 @@ export class AudioRecorder {
     const isMac = process.platform === 'darwin';
 
     if (isWin) {
-      // PowerShell record script to WAV file or ffmpeg/sox
+      // The MCI waveaudio device alias 'whisperrec' is owned by this PowerShell
+      // process. It must stay alive until we save, so the script blocks reading
+      // stdin and only saves/closes when the orchestrator sends the "save" line.
       const psScript = `
         $code = @"
         using System;
@@ -46,10 +48,21 @@ export class AudioRecorder {
         [OpenWhisperAudio.WinAudio]::mciSendString("open new type waveaudio alias whisperrec", $null, 0, 0)
         [OpenWhisperAudio.WinAudio]::mciSendString("set whisperrec time format ms bitspersample 16 channels 1 samplespersec 16000", $null, 0, 0)
         [OpenWhisperAudio.WinAudio]::mciSendString("record whisperrec", $null, 0, 0)
-        Start-Sleep -Seconds 300
+        while ($true) {
+          $line = [Console]::In.ReadLine()
+          if ($line -eq $null) { exit 1 }
+          if ($line -eq "save") {
+            [OpenWhisperAudio.WinAudio]::mciSendString('save whisperrec "' + $env:OPENWHISPER_SAVE_PATH + '"', $null, 0, 0)
+            [OpenWhisperAudio.WinAudio]::mciSendString("close whisperrec", $null, 0, 0)
+            exit 0
+          }
+        }
       `;
 
-      this.recordingProcess = spawn('powershell', ['-NoProfile', '-Command', psScript], { stdio: 'ignore' });
+      this.recordingProcess = spawn('powershell', ['-NoProfile', '-Command', psScript], {
+        stdio: ['pipe', 'ignore', 'ignore'],
+        env: { ...process.env, OPENWHISPER_SAVE_PATH: this.outputPath }
+      });
     } else if (isMac) {
       this.recordingProcess = spawn('rec', ['-q', '-c', '1', '-r', '16000', '-b', '16', this.outputPath], { stdio: 'ignore' });
     } else {
@@ -75,33 +88,23 @@ export class AudioRecorder {
     const isWin = process.platform === 'win32';
 
     if (isWin) {
-      // Save MCI recording in powershell
-      const stopPsScript = `
-        $code = @"
-        using System;
-        using System.Runtime.InteropServices;
-        namespace OpenWhisperAudio {
-          public class WinAudio {
-            [DllImport("winmm.dll", EntryPoint = "mciSendStringA", ExactSpelling = true, CharSet = CharSet.Ansi, SetLastError = true)]
-            public static extern int mciSendString(string lpstrCommand, string lpstrReturnString, int uReturnLength, int hwndCallback);
+      // Tell the *same* PowerShell process (which owns the MCI alias) to save and
+      // close the recording, then wait for it to exit. Saving in a new process
+      // cannot work because the MCI device alias is scoped to its owning process.
+      const proc = this.recordingProcess;
+      if (proc && proc.stdin) {
+        await new Promise((resolve) => {
+          const done = () => resolve();
+          if (proc.exitCode !== null || proc.signalCode !== null) {
+            return done();
           }
-        }
-"@
-        Add-Type -TypeDefinition $code
-        $path = "${this.outputPath.replace(/\\/g, '\\\\')}"
-        [OpenWhisperAudio.WinAudio]::mciSendString("save whisperrec \\"" + $path + "\\"", $null, 0, 0)
-        [OpenWhisperAudio.WinAudio]::mciSendString("close whisperrec", $null, 0, 0)
-      `;
-
-      try {
-        if (this.recordingProcess) {
-          this.recordingProcess.kill();
-        }
-        await new Promise(r => setTimeout(r, 200));
-        const stopProc = spawn('powershell', ['-NoProfile', '-Command', stopPsScript]);
-        await new Promise((resolve) => stopProc.on('close', resolve));
-      } catch (err) {
-        logger.error({ err }, 'Error saving Windows audio recording');
+          proc.once('close', done);
+          try {
+            proc.stdin.write('save\n');
+          } catch (err) {
+            done();
+          }
+        });
       }
     } else {
       if (this.recordingProcess) {
@@ -109,10 +112,18 @@ export class AudioRecorder {
       }
     }
 
+    this.recordingProcess = null;
     this.isRecording = false;
 
-    // Ensure audio file exists, or generate a valid 16kHz WAV header dummy if process couldn't record
-    if (!fs.existsSync(this.outputPath) || fs.statSync(this.outputPath).size === 0) {
+    // Ensure the audio file exists with actual sample data. A valid RIFF/WAVE
+    // header is exactly 44 bytes; a file that is missing or no larger than the
+    // header carries no PCM frames (e.g. a mic-less MCI save), so fall back to
+    // a silent dummy that whisper can read without erroring.
+    let validAudio = false;
+    if (fs.existsSync(this.outputPath) && fs.statSync(this.outputPath).size > 44) {
+      validAudio = true;
+    }
+    if (!validAudio) {
       this.generateDummyWavFile(this.outputPath);
     }
 

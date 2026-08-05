@@ -1,6 +1,6 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { COMMAND_REGISTRY, getSuggestions, resolveSelectedCommand } from './autocomplete.js';
+import { COMMAND_REGISTRY, resolveSelectedCommand } from './autocomplete.js';
 import { executeSetupWhisper } from '../commands/setup-whisper.js';
 import { executeSetupLLM } from '../commands/setup-llm.js';
 import { executeSwitchWhisper } from '../commands/switch-whisper.js';

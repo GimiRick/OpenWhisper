@@ -6,7 +6,6 @@ export class TranscriptionOrchestrator {
   constructor() {
     this.isSTTRecording = false;
     this.isAssistantRecording = false;
-    this.currentWavPath = null;
   }
 
   get audioRecorder() { return container.get('audioRecorder'); }
@@ -22,7 +21,7 @@ export class TranscriptionOrchestrator {
         this.isSTTRecording = true;
         this.soundPlayer.playStart();
         if (onStatusChange) onStatusChange('Listening for Speech-to-Text...');
-        this.currentWavPath = await this.audioRecorder.startRecording();
+        await this.audioRecorder.startRecording();
         logger.info('Started STT audio recording session');
       } catch (err) {
         this.isSTTRecording = false;
@@ -62,7 +61,7 @@ export class TranscriptionOrchestrator {
         this.isAssistantRecording = true;
         this.soundPlayer.playStart();
         if (onStatusChange) onStatusChange('Listening for AI Assistant prompt...');
-        this.currentWavPath = await this.audioRecorder.startRecording();
+        await this.audioRecorder.startRecording();
         logger.info('Started AI Assistant audio recording session');
       } catch (err) {
         this.isAssistantRecording = false;
@@ -100,14 +99,7 @@ export class TranscriptionOrchestrator {
 
         let fullResponse = '';
         const streamingEnabled = this.configManager.get('streaming');
-
-        if (streamingEnabled) {
-          fullResponse = await provider.streamChat(messages, (token) => {
-            if (onStreamToken) onStreamToken(token);
-          });
-        } else {
-          fullResponse = await provider.streamChat(messages, null);
-        }
+        fullResponse = await provider.streamChat(messages, onStreamToken, streamingEnabled);
 
         if (onStatusChange) onStatusChange(`Typing response (${fullResponse.length} chars)...`);
         await this.typingEngine.typeText(fullResponse);

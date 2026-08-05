@@ -39,8 +39,10 @@ export async function executeRemoveWhisper() {
 
   if (confirm) {
     const filePath = path.join(DEFAULT_PATHS.modelsDir, targetModel.filename);
+    let removed = false;
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
+      removed = true;
     }
 
     // Reset current if removed
@@ -49,7 +51,11 @@ export async function executeRemoveWhisper() {
       configManager.setCurrentWhisperModel(remaining.length > 0 ? remaining[0].filename : '');
     }
 
-    console.log(theme.success(`✔ Deleted ${targetModel.filename} from disk.`));
+    if (removed) {
+      console.log(theme.success(`✔ Deleted ${targetModel.filename} from disk.`));
+    } else {
+      console.log(theme.warning(`File ${targetModel.filename} was already absent.`));
+    }
   } else {
     console.log(theme.muted('Operation cancelled.'));
   }

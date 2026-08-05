@@ -56,5 +56,5 @@ npm run cli
 
   ```bash
   sudo apt-get update
-  sudo apt-get install sox libsox-fmt-all record xdotool
+  sudo apt-get install sox libsox-fmt-all xdotool
   ```

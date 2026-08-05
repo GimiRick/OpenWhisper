@@ -24,7 +24,12 @@ export async function executeDoctor() {
 
   for (const item of items) {
     const res = diagnostics[item.key];
-    const mark = res.ok ? theme.success('✔ PASS') : theme.error('✖ FAIL');
+    let mark;
+    if (res.status === 'unverified') {
+      mark = theme.warning('? UNKNOWN');
+    } else {
+      mark = res.ok ? theme.success('✔ PASS') : theme.error('✖ FAIL');
+    }
     console.log(`${mark} ${theme.primary(item.label.padEnd(35))} -> ${res.message}`);
   }
 
